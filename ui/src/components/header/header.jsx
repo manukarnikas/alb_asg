@@ -6,7 +6,7 @@ const { Header } = Layout;
 const HeaderComponent = ()=>{
     return (
         <Header className="header">
-            <p className="title">Send Message to SQS</p>
+            <h1 className="title">Task List</h1>
         </Header>
     );
 }

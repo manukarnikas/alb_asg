@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Alert } from "antd";
 import HeaderComponent from "./components/header/header";
 import FooterComponent from "./components/footer/footer";
 import ContentComponent from "./components/content/content";
@@ -8,8 +7,6 @@ import "./App.css";
 
 function App() {
   const [listData, setListData] = useState([]);
-  const [successAlert, setSuccessAlert] = useState(false);
-  const [failureAlert, setFailureAlert] = useState(false);
 
   useEffect(()=>{
     getListData();
@@ -27,44 +24,41 @@ function App() {
       });
   };
 
+  const deleteListItem = (id) => {
+    const url = process.env.REACT_APP_BASE_URL;
+    axios
+      .delete(`${url}/list/${id}`)
+      .then(function (response) {
+        let newListData = [...listData];
+        newListData = newListData.filter(item=> item._id !== id)
+        setListData(newListData);
+      })
+      .catch(function (error) {
+        console.error(error);
+      });
+  };
+
+
   const addListItem = (listItem) => {
     const url = process.env.REACT_APP_BASE_URL;
     axios
       .post(`${url}/list`, {
-        data: listItem,
+        task: listItem,
       })
       .then(function (response) {
         let newListData = [...listData];
         newListData.push(response?.data)
         setListData(newListData);
-        setSuccessAlert(true);
       })
       .catch(function (error) {
         console.error(error);
-        setFailureAlert(true);
       });
   };
 
   return (
     <>
       <HeaderComponent />
-      {successAlert.status ? (
-        <Alert
-          message={`Task added successfully!`}
-          type="success"
-          closable
-          onClose={()=> setSuccessAlert(false)}
-        />
-      ) : null}
-      {failureAlert.status ? (
-        <Alert
-          message={`Failed to add task!`}
-          type="error"
-          closable
-          onClose={()=> setFailureAlert(false)}
-        />
-      ) : null}
-      <ContentComponent listData={listData} addListItem={addListItem} />
+      <ContentComponent listData={listData} addListItem={addListItem} deleteListItem={deleteListItem} />
       <FooterComponent />
     </>
   );

@@ -2,6 +2,8 @@
     padding: 10% 25% 10% 25%;
 }
 
-.list-container{
-    width: 100% !important;
+.icon{
+    color: red;
+    font-size: 16px;
+    float: right;
 }
