@@ -39,8 +39,8 @@ const init = async () => {
       });
   });
 
-  app.use("/list", listRouter);
-  app.use("/ip",ipRouter);
+  app.use("/api/list", listRouter);
+  app.use("/api/ip", ipRouter);
   //listen
   app.listen(process.env.NODE_PORT, () => {
     console.log(`Server Started on port ${process.env.NODE_PORT}`);
