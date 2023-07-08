@@ -36,7 +36,10 @@ const ContentComponent = (props) => {
         <Button
           type="primary"
           disabled={!text?.length}
-          onClick={() => {addListItem(text); clearText();}}
+          onClick={() => {
+            addListItem(text);
+            clearText();
+          }}
         >
           Add
         </Button>
@@ -59,10 +62,10 @@ const ContentComponent = (props) => {
         dataSource={listData}
         renderItem={(item) => (
           <List.Item>
-            <Typography.Text>{item.task}</Typography.Text>
+            <Typography.Text>{item?.task}</Typography.Text>
             <DeleteOutlined
               className="icon"
-              onClick={() => deleteListItem(item._id)}
+              onClick={() => deleteListItem(item?._id)}
             />
           </List.Item>
         )}
