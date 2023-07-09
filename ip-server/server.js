@@ -1,15 +1,10 @@
-const ListController = require("./controller/ListController");
-const { dbInit } = require("./database/Database");
 const express = require("express");
+const axios = require("axios");
 const cors = require("cors");
-
-require("dotenv").config();
 
 const app = express();
 
 const init = async () => {
-  //db
-  dbInit();
 
   //middleware
   app.use(cors());
@@ -18,9 +13,20 @@ const init = async () => {
 
   //routes
   const router = express.Router();
-  router.get("/list", ListController.getLists);
-  router.post("/list", ListController.addListItem);
-  router.delete("/list/:id", ListController.deleteListItem);
+  router.get("/ip", (req, res) => {
+    const url = "https://api64.ipify.org?format=json";
+    axios
+      .get(url)
+      .then(function (response) {
+        res.status(200);
+        res.send(response?.data);
+      })
+      .catch(function (error) {
+        console.log(error);
+        res.status(500);
+        res.send(error.message);
+      });
+  });
 
   app.use("/api", router);
   console.log('initialized routes');

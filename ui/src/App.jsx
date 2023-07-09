@@ -8,26 +8,12 @@ import "./App.css";
 function App() {
   const [listData, setListData] = useState([]);
 
-  const [clientIp, setClientIp] = useState("");
   const [serverIp, setServerIp] = useState("");
 
   useEffect(() => {
-    getClientIp();
     getServerIp();
     getListData();
   }, []);
-
-  const getClientIp = () => {
-    const url = "https://api64.ipify.org?format=json";
-    axios
-      .get(url)
-      .then(function (response) {
-        setClientIp(response?.data?.ip);
-      })
-      .catch(function (error) {
-        console.log(error);
-      });
-  };
 
   const getServerIp = () => {
     const url = process.env.REACT_APP_BASE_URL;
@@ -92,9 +78,6 @@ function App() {
         deleteListItem={deleteListItem}
       />
       <div style={{padding: '0% 25% 10% 25%'}}>
-        <p>
-          Client ip: <span>{clientIp}</span>
-        </p>
         <p>
           Server ip: <span>{serverIp}</span>
         </p>
