@@ -12,27 +12,33 @@ const init = async () => {
   app.use(express.urlencoded({ extended: true }));
 
   //routes
-  const router = express.Router();
-  router.get("/ip", (req, res) => {
-    // const url = "https://api64.ipify.org?format=json";
-    // axios
-    //   .get(url)
-    //   .then(function (response) {
-    //     res.status(200);
-    //     res.send(response?.data);
-    //   })
-    //   .catch(function (error) {
-    //     console.log(error);
-    //     res.status(500);
-    //     res.send(error.message);
-    //   });
+
+  const healthCheckRouter = express.Router();
+  healthCheckRouter.get('/',(req,res)=>{
     res.status(200);
     res.send({
-      ip: "test"
+      status: "success"
     })
   });
 
+  const router = express.Router();
+  router.get("/ip", (req, res) => {
+    const url = "https://api64.ipify.org?format=json";
+    axios
+      .get(url)
+      .then(function (response) {
+        res.status(200);
+        res.send(response?.data);
+      })
+      .catch(function (error) {
+        console.log(error);
+        res.status(500);
+        res.send(error.message);
+      });
+  });
+
   app.use("/api", router);
+  app.use("/health", healthCheckRouter);
   console.log('initialized routes');
   //listen
   const port = 3008;

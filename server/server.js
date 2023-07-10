@@ -17,12 +17,22 @@ const init = async () => {
   app.use(express.urlencoded({ extended: true }));
 
   //routes
+
+  const healthCheckRouter = express.Router();
+  healthCheckRouter.get('/',(req,res)=>{
+    res.status(200);
+    res.send({
+      status: "success"
+    })
+  });
+
   const router = express.Router();
   router.get("/list", ListController.getLists);
   router.post("/list", ListController.addListItem);
   router.delete("/list/:id", ListController.deleteListItem);
 
   app.use("/api", router);
+  app.use("/health", healthCheckRouter);
   console.log('initialized routes');
   //listen
   const port = 3008;
