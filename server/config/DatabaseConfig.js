@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 module.exports = {
     DB: "task_db",
     PORT: 27017,
