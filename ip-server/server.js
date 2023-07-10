@@ -14,18 +14,20 @@ const init = async () => {
   //routes
   const router = express.Router();
   router.get("/ip", (req, res) => {
-    const url = "https://api64.ipify.org?format=json";
-    axios
-      .get(url)
-      .then(function (response) {
-        res.status(200);
-        res.send(response?.data);
-      })
-      .catch(function (error) {
-        console.log(error);
-        res.status(500);
-        res.send(error.message);
-      });
+    // const url = "https://api64.ipify.org?format=json";
+    // axios
+    //   .get(url)
+    //   .then(function (response) {
+    //     res.status(200);
+    //     res.send(response?.data);
+    //   })
+    //   .catch(function (error) {
+    //     console.log(error);
+    //     res.status(500);
+    //     res.send(error.message);
+    //   });
+    res.status(200);
+    res.send("Test")
   });
 
   app.use("/api", router);
