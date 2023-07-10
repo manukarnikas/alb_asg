@@ -27,7 +27,9 @@ const init = async () => {
     //     res.send(error.message);
     //   });
     res.status(200);
-    res.send("Test")
+    res.send({
+      ip: "test"
+    })
   });
 
   app.use("/api", router);
