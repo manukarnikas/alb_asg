@@ -8,7 +8,7 @@ git clone https://github.com/manukarnikas/alb_asg.git
 cd alb_asg/ui
 
 # Step 3: Create .env file with URL env variable
-echo "REACT_APP_BASE_URL=<url>/api" > .env
+echo "REACT_APP_BASE_URL=<host>:3008/api" > .env
 
 # Step 4: Run npm install
 npm install

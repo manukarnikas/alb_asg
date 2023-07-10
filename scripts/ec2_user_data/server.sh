@@ -8,7 +8,7 @@ git clone https://github.com/manukarnikas/alb_asg.git
 cd alb_asg/server
 
 # Step 3: Create .env file with URL env variable
-echo "DB_HOST=<url>" > .env
+echo "DB_HOST=<host>" > .env
 
 # Step 4: Run npm install
 npm install

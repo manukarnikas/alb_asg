@@ -2,7 +2,7 @@
 cd /home/ec2-user
 
 # Step 1: Clone the  Git repo
-git clone https://github.com/manukarnikas/alb_asg.git 
+git clone https://github.com/manukarnikas/alb_asg.git
 
 # Step 2: Change to the cloned repo directory
 cd alb_asg/ip-server
@@ -11,4 +11,4 @@ cd alb_asg/ip-server
 npm install
 
 # Step 4: Start the application
-node server.js 
+node server.js
