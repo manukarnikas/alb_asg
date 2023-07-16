@@ -1,0 +1,244 @@
+####################################### Note #################################################
+# The AMI Id's used here are private ami's which has pre-installed git, node.js, npm and mongo
+# Replace the AMI Ids, Region, Vpc Id and Subnet Ids in the template
+##############################################################################################
+   
+Resources:
+  UI:
+    Type: AWS::EC2::Instance
+    Properties: 
+      ImageId: <ami-id>
+      InstanceType: t2.micro
+      SecurityGroupIds: 
+        - !Ref UISecurityGroup
+      IamInstanceProfile: !Ref MyInstanceProfile
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          cd /home/ec2-user
+          # Step 1: Clone the  Git repo
+          git clone https://github.com/manukarnikas/alb_asg.git 
+          # Step 2: Change to the cloned repo directory
+          cd alb_asg/ui
+          # Step 3: Create .env file with URL env variable
+          echo "REACT_APP_BASE_URL=http://$(aws cloudformation describe-stacks --stack-name alb-asg --query "Stacks[0].Outputs[0].OutputValue" --region <region>  --output text):3008/api" > .env
+          # Step 4: Run npm install
+          npm install
+          # Step 5: Start the application
+          npm start 
+
+  Server:
+    Type: AWS::EC2::Instance
+    Properties: 
+      ImageId: <ami-id>
+      InstanceType: t2.micro
+      SecurityGroupIds:
+        - !Ref ServerSecurityGroup
+      IamInstanceProfile: !Ref MyInstanceProfile
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          cd /home/ec2-user
+          # Step 1: Clone the  Git repo
+          git clone https://github.com/manukarnikas/alb_asg.git 
+          # Step 2: Change to the cloned repo directory
+          cd alb_asg/server
+          # Step 3: Create .env file with URL env variable
+          echo "DB_HOST=$(aws cloudformation describe-stacks --stack-name alb-asg --query "Stacks[0].Outputs[1].OutputValue" --region <region> --output text)" > .env
+          # Step 4: Run npm install
+          npm install
+          # Step 5: Start the application
+          node server.js 
+
+  MongoServer:
+    Type: AWS::EC2::Instance
+    Properties: 
+      ImageId: <ami-id>
+      InstanceType: t2.micro
+      SecurityGroupIds: 
+        - !Ref MongoSecurityGroup
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          sudo sed -i "s,\\(^[[:blank:]]*bindIp:\\) .*,\\1 0.0.0.0," /etc/mongod.conf
+          sudo systemctl start mongod
+
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: MyLoadBalancer
+      Subnets: # Replace with your subnet IDs
+        <subnet-ids>
+      SecurityGroups: 
+        - !GetAtt LBSecurityGroup.GroupId
+      Type: application
+
+  UITargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      VpcId: <vpc-id>  #replace with your vpcId
+      TargetType: instance
+      Port: 3000
+      Protocol: HTTP
+      Targets:
+        - Id: !Ref UI
+          Port: 3000
+      HealthCheckEnabled : true
+      HealthCheckIntervalSeconds : 30
+      HealthCheckPath : /
+      HealthCheckPort : 3000
+      HealthCheckProtocol : HTTP
+      HealthCheckTimeoutSeconds : 5
+      HealthyThresholdCount : 3
+      UnhealthyThresholdCount : 2
+
+  ServerTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      VpcId: <vpc-id> #replace with your vpcId
+      TargetType: instance
+      Port: 3008
+      Protocol: HTTP
+      Targets:
+        - Id: !Ref Server
+          Port: 3008
+      HealthCheckEnabled : true
+      HealthCheckIntervalSeconds : 30
+      HealthCheckPath : /health
+      HealthCheckPort : 3008
+      HealthCheckProtocol : HTTP
+      HealthCheckTimeoutSeconds : 5
+      HealthyThresholdCount : 3
+      UnhealthyThresholdCount : 2
+
+  UIListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 3000
+      Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref UITargetGroup
+
+  ServerListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 3008
+      Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref ServerTargetGroup
+
+  LBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: LB Security Group
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3000
+          ToPort: 3000
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 3008
+          ToPort: 3008
+          CidrIp: 0.0.0.0/0  
+  
+  UISecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: UI Security Group
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0  
+
+  UISecurityGroupIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: UI Security Group
+      GroupId: !GetAtt UISecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: 3000
+      ToPort: 3000
+      SourceSecurityGroupId: !GetAtt LBSecurityGroup.GroupId
+
+  ServerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Server Security Group
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0  
+
+  ServerSecurityGroupIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Server Security Group
+      GroupId: !GetAtt ServerSecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: 3008
+      ToPort: 3008
+      SourceSecurityGroupId: !GetAtt LBSecurityGroup.GroupId
+
+  MongoSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Mongo Server Security Group
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0  
+
+  MongoSecurityGroupIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Mongo Server Security Group
+      GroupId: !GetAtt MongoSecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: 27017
+      ToPort: 27017
+      SourceSecurityGroupId: !GetAtt ServerSecurityGroup.GroupId
+
+  MyInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref MyEc2Role
+
+  MyEc2Role:
+    Type: AWS::IAM::Role
+    Properties: 
+      RoleName: cloudformation-ec2-access
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      Policies: 
+        - PolicyName: cloudformation-ec2-access-policy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement: 
+              - Effect: Allow
+                Action: Cloudformation:*
+                Resource: '*'
+
+Outputs:
+  LoadBalancerURL:
+    Value: !GetAtt LoadBalancer.DNSName
+    Export:
+      Name: LoadBalancerURL
+
+  MongoServerURL:
+    Value: !GetAtt MongoServer.PublicDnsName
+    Export:
+      Name: MongoServerURL
+
